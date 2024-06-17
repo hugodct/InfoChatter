@@ -14,14 +14,12 @@ from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "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"
 
 
 class BOE(object):
-    def __init__(self, name: str, filepath: str):
-        self.name = name
-        self.filepath = filepath
-        result = ''.join([i for i in name if not i.isdigit()])
-        self.vdbcollection = result.replace(" ", "_")
+    def __init__(self, vdbcollection: str):
+        self.vdbcollection = vdbcollection
         self.embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'), model_name="text-embedding-3-small")
 
     def extract_anexos(self, infile_path, outfile_path):
@@ -71,7 +69,7 @@ class BOE(object):
                 writer.write(out)
 
 
-    def vectorize_pdf(self, ChromaClient, pdffile):
+    def vectorize_pdf(self, ChromaClient, pdffile, pdfname):
         # Splits and embeds pdf in a collection of the same name
         loader = PyPDFLoader(pdffile)
         docs = loader.load()
@@ -81,7 +79,7 @@ class BOE(object):
         )
         all_splits = text_splitter.split_documents(docs)
 
-        Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=self.vdbcollection, client=ChromaClient)
+        Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=self.vdbcollection, client=ChromaClient, collection_metadata={"filename": pdfname})
 
 
     def extract_info(self, ChromaClient, info_to_extract: str):
@@ -113,25 +111,6 @@ class BOE(object):
 
         return rag_chain.invoke(info_to_extract)
 
-
-
-if __name__ == '__main__':
-
-    # READ DATA
-    infile = "storage/BOE Ultima Milla.pdf"
-    boe1 = BOE("Ultima Milla", infile)
-    ChromaClient = chromadb.PersistentClient(path="vectordb")
-
-    # EXTRACT ANEXOS
-    #boe1.extract_anexos(infile, "anexos")
-
-    # VECTORIZE BOE
-    #boe1.vectorize_pdf(ChromaClient, infile)
-
-    # EXTRACT INFO
-    #beneficiarios = boe1.extract_info(ChromaClient, "¿Cuáles son los beneficiarios que pueden recibir esta ayuda?")
-    requisitos = boe1.extract_info(ChromaClient, "¿Cuáles son los requisitos que debe cumplir una empresa para pedir esta ayuda?")
-    print(requisitos)
 
 
 
