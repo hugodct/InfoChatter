@@ -21,6 +21,7 @@ def hello_world():
 
 @app.get("/vectorize_pdf")
 async def vectorize_pdf(in_file: UploadFile, pdfhash: str):
+    # Vectorizes PDF content and stores it in collection with name pdfhash
     async with aiofiles.open(os.environ.get('TEMPFIlE_PATH'), 'wb') as out_file:
         content = await in_file.read()  # async read
         await out_file.write(content)  # async write
@@ -44,8 +45,9 @@ async def vectorize_pdf(in_file: UploadFile, pdfhash: str):
     os.remove(os.environ.get('PDFDICT_PATH'))
 
 @app.get("/ask_info")
-async def extract_info(request: Request, pdfhash: str):
-    boe_object = BOE(pdfhash)
+async def extract_info(request: Request, collectionhash: str):
+    # Uses collection in pdfhash to answer question in request
+    boe_object = BOE(collectionhash)
     body = await request.json()
     question = body["question"]
     return boe_object.extract_info(ChromaClient, question)
