@@ -1,3 +1,4 @@
+import chromadb
 from fastapi import FastAPI, Request, HTTPException, UploadFile
 import aiofiles
 import pickle
@@ -11,6 +12,10 @@ else:
     os.environ["TEMPFIlE_PATH"] = os.path.join(os.sep, 'storage', 'InfoChatter', "vectordb", "tempfile.pdf")
     os.environ["PDFDICT_PATH"] = os.path.join(os.sep, 'storage', 'InfoChatter', 'vectordb', 'pdf_dict.pkl')
 
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 
 app = FastAPI()
 ChromaClient = chromadb.PersistentClient(path=os.path.join(os.sep, 'storage', 'InfoChatter', "vectordb"))
@@ -20,18 +25,17 @@ def hello_world():
     return "This is Info Chatter!"
 
 @app.get("/vectorize_pdf")
-async def vectorize_pdf(in_file: UploadFile, pdfhash: str):
+async def vectorizepdf(in_file: UploadFile, pdfhash: str):
     # Vectorizes PDF content and stores it in collection with name pdfhash
     async with aiofiles.open(os.environ.get('TEMPFIlE_PATH'), 'wb') as out_file:
         content = await in_file.read()  # async read
         await out_file.write(content)  # async write
 
-    boe_object = BOE(vdbcollection=pdfhash)
-    boe_object.vectorize_pdf(ChromaClient, os.environ.get('TEMPFIlE_PATH'), in_file.filename)
+    vectorize_pdf(ChromaClient, pdfhash, os.environ.get('TEMPFIlE_PATH'), in_file.filename)
 
     # Save pdf name and hash in dict
-    if not os.path.isfile(os.environ.get('TEMPFIlE_PATH')):
-        with open('vectordb/pdf_dict.pkl', 'wb') as f:
+    if not os.path.isfile(os.environ.get('PDFDICT_PATH')):
+        with open(os.environ.get('PDFDICT_PATH'), 'wb') as f:
             dictionary = {"key":"value"}
             pickle.dump(dictionary, f)
 
@@ -42,14 +46,14 @@ async def vectorize_pdf(in_file: UploadFile, pdfhash: str):
         loaded_dict[in_file.filename] = pdfhash
         pickle.dump(loaded_dict, f)
 
-    os.remove(os.environ.get('PDFDICT_PATH'))
+    os.remove(os.environ.get('TEMPFIlE_PATH'))
+    return "PDF vectorized succesfully, saved at collection " + pdfhash
 
 @app.get("/ask_info")
-async def extract_info(request: Request, collectionhash: str):
+async def extractinfo(request: Request, collectionhash: str):
     # Uses collection in pdfhash to answer question in request
-    boe_object = BOE(collectionhash)
     body = await request.json()
     question = body["question"]
-    return boe_object.extract_info(ChromaClient, question)
+    return extract_info(ChromaClient, collectionhash, question)
 
 
