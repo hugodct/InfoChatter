@@ -12,7 +12,6 @@ if os.name == 'nt':
 else:
     os.environ["TEMPFIlE_PATH"] = os.path.join(os.sep, 'storage', 'InfoChatter', "vectordb", "tempfile.pdf")
     os.environ["PDFDICT_PATH"] = os.path.join(os.sep, 'storage', 'InfoChatter', 'vectordb', 'pdf_dict.pkl')
-
     __import__('pysqlite3')
     import sys
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -46,8 +45,8 @@ async def vectorizeweb(request: Request, webhash: str):
     body = await request.json()
     weburl = body["weburl"]
 
-    webname = urlparse('http://www.example.test/foo/bar').netloc
-    await vectorizeweb(ChromaClient, webhash, weburl, webname)
+    webname = urlparse(weburl).netloc
+    vectorize_web(ChromaClient, webhash, weburl, webname)
 
     dictpath = os.environ.get('PDFDICT_PATH')
     save_to_hashdict(dictpath, webname, webhash)
