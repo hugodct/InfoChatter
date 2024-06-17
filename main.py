@@ -2,6 +2,7 @@ import chromadb
 from fastapi import FastAPI, Request, HTTPException, UploadFile
 import aiofiles
 import pickle
+from urllib.parse import urlparse
 import os
 from BOEutils import *
 
@@ -48,6 +49,17 @@ async def vectorizepdf(in_file: UploadFile, pdfhash: str):
 
     os.remove(os.environ.get('TEMPFIlE_PATH'))
     return "PDF vectorized succesfully, saved at collection " + pdfhash
+
+@app.get("/vectorize_web")
+async def vectorizeweb(request: Request, webhash: str):
+    body = await request.json()
+    weburl = body["weburl"]
+
+    webname = urlparse('http://www.example.test/foo/bar').netloc
+    await vectorizeweb(ChromaClient, webhash, weburl, webname)
+
+    # Save to pdf dict
+    return "Web vectorized succesfully, saved at collection " + webhash
 
 @app.get("/ask_info")
 async def extractinfo(request: Request, collectionhash: str):

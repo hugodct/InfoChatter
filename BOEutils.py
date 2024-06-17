@@ -11,6 +11,12 @@ from langchain_core.prompts import PromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
+if os.name == 'nt':
+    pass
+else:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_API_KEY"] = "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"
@@ -110,3 +116,10 @@ def extract_info(ChromaClient, collectionhash, info_to_extract: str):
 def vectorize_web(ChromaClient, collectionhash, weburl, webname):
     loader = WebBaseLoader(weburl)
     data = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=200, add_start_index=True
+    )
+    all_splits = text_splitter.split_documents(data)
+    Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=collectionhash,
+                          client=ChromaClient, collection_metadata={"filename": webname})
