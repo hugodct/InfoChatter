@@ -1,9 +1,7 @@
 import chromadb
 from fastapi import FastAPI, Request, HTTPException, UploadFile
 import aiofiles
-import pickle
 from urllib.parse import urlparse
-import os
 from BOEutils import *
 
 if os.name == 'nt':
