@@ -10,6 +10,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import PromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+import pickle
 
 if os.name == 'nt':
     pass
@@ -123,3 +124,16 @@ def vectorize_web(ChromaClient, collectionhash, weburl, webname):
     all_splits = text_splitter.split_documents(data)
     Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=collectionhash,
                           client=ChromaClient, collection_metadata={"filename": webname})
+
+def save_to_hashdict(dictpath, key, value):
+    if not os.path.isfile(dictpath):
+        with open(dictpath, 'wb') as f:
+            dictionary = {"key":"value"}
+            pickle.dump(dictionary, f)
+
+    with open(dictpath, 'rb') as f:
+        loaded_dict = pickle.load(f)
+
+    with open(dictpath, 'wb') as f:
+        loaded_dict[key] = value
+        pickle.dump(loaded_dict, f)

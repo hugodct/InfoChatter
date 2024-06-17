@@ -35,17 +35,8 @@ async def vectorizepdf(in_file: UploadFile, pdfhash: str):
     vectorize_pdf(ChromaClient, pdfhash, os.environ.get('TEMPFIlE_PATH'), in_file.filename)
 
     # Save pdf name and hash in dict
-    if not os.path.isfile(os.environ.get('PDFDICT_PATH')):
-        with open(os.environ.get('PDFDICT_PATH'), 'wb') as f:
-            dictionary = {"key":"value"}
-            pickle.dump(dictionary, f)
-
-    with open(os.environ.get('PDFDICT_PATH'), 'rb') as f:
-        loaded_dict = pickle.load(f)
-
-    with open(os.environ.get('PDFDICT_PATH'), 'wb') as f:
-        loaded_dict[in_file.filename] = pdfhash
-        pickle.dump(loaded_dict, f)
+    dictpath = os.environ.get('PDFDICT_PATH')
+    save_to_hashdict(dictpath, in_file.filename, pdfhash)
 
     os.remove(os.environ.get('TEMPFIlE_PATH'))
     return "PDF vectorized succesfully, saved at collection " + pdfhash
@@ -57,6 +48,9 @@ async def vectorizeweb(request: Request, webhash: str):
 
     webname = urlparse('http://www.example.test/foo/bar').netloc
     await vectorizeweb(ChromaClient, webhash, weburl, webname)
+
+    dictpath = os.environ.get('PDFDICT_PATH')
+    save_to_hashdict(dictpath, webname, webhash)
 
     # Save to pdf dict
     return "Web vectorized succesfully, saved at collection " + webhash

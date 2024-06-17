@@ -31,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Install SQLite3
-        run: pip install pysqlite3-binary
+        run: sudo apt install sqlite3
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
