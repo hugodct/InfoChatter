@@ -1,8 +1,9 @@
-import chromadb
 from fastapi import FastAPI, Request, HTTPException, UploadFile
 import aiofiles
 from urllib.parse import urlparse
-from BOEutils import *
+from app.BOEutils import *
+import chromadb
+
 
 if os.name == 'nt':
     os.environ["TEMPFIlE_PATH"] = os.path.join("vectordb", "tempfile.pdf")
@@ -10,9 +11,6 @@ if os.name == 'nt':
 else:
     os.environ["TEMPFIlE_PATH"] = os.path.join(os.sep, 'storage', 'InfoChatter', "vectordb", "tempfile.pdf")
     os.environ["PDFDICT_PATH"] = os.path.join(os.sep, 'storage', 'InfoChatter', 'vectordb', 'pdf_dict.pkl')
-    __import__('pysqlite3')
-    import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 
 app = FastAPI()
@@ -20,9 +18,9 @@ ChromaClient = chromadb.PersistentClient(path=os.path.join(os.sep, 'storage', 'I
 
 @app.get("/")
 def hello_world():
-    return "This is Info Chatter!"
+    return "This is Info Chatter! v3"
 
-@app.get("/vectorize_pdf")
+@app.post("/vectorize_pdf")
 async def vectorizepdf(in_file: UploadFile, pdfhash: str):
     # Vectorizes PDF content and stores it in collection with name pdfhash
     async with aiofiles.open(os.environ.get('TEMPFIlE_PATH'), 'wb') as out_file:
@@ -38,7 +36,7 @@ async def vectorizepdf(in_file: UploadFile, pdfhash: str):
     os.remove(os.environ.get('TEMPFIlE_PATH'))
     return "PDF vectorized succesfully, saved at collection " + pdfhash
 
-@app.get("/vectorize_web")
+@app.post("/vectorize_web")
 async def vectorizeweb(request: Request, webhash: str):
     body = await request.json()
     weburl = body["weburl"]

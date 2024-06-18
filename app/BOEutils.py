@@ -12,12 +12,6 @@ from langchain_community.document_loaders import WebBaseLoader
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 import pickle
 
-if os.name == 'nt':
-    pass
-else:
-    __import__('pysqlite3')
-    import sys
-    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_API_KEY"] = "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"
