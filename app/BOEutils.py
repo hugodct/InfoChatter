@@ -81,7 +81,7 @@ def vectorize_pdf(namespace, pdffile, pdfname):
     vectorstore.add_documents(all_splits)
 
 
-def vectorize_web(ChromaClient, collectionhash, weburl, webname):
+def vectorize_web(collectionhash, weburl, webname):
     loader = WebBaseLoader(weburl)
     data = loader.load()
 
@@ -89,8 +89,8 @@ def vectorize_web(ChromaClient, collectionhash, weburl, webname):
         chunk_size=1000, chunk_overlap=200, add_start_index=True
     )
     all_splits = text_splitter.split_documents(data)
-    Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=collectionhash,
-                          client=ChromaClient, collection_metadata={"filename": webname})
+    vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings, namespace=collectionhash)
+    vectorstore.add_documents(all_splits)
 
 def extract_info(namespace, info_to_extract: str):
     # Load from disk

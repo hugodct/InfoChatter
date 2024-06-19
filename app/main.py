@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, UploadFile
 import aiofiles
 from urllib.parse import urlparse
-from BOEutils import *
+from app.BOEutils import *
 import os
 
 
@@ -40,7 +40,7 @@ async def vectorizeweb(request: Request, webhash: str):
     weburl = body["weburl"]
 
     webname = urlparse(weburl).netloc
-    vectorize_web(vectorstore, webhash, weburl, webname)
+    vectorize_web(webhash, weburl, webname)
 
     dictpath = os.environ.get('PDFDICT_PATH')
     save_to_hashdict(dictpath, webname, webhash)
