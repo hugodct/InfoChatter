@@ -9,15 +9,17 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import PromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
-from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from langchain_pinecone import PineconeVectorStore
 import pickle
 
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_API_KEY"] = "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"
 os.environ["OPENAI_API_KEY"] = "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"
+os.environ['PINECONE_API_KEY'] = '9ba0f5d0-af9f-491e-9f5c-663b388c1b8a'
 
-embedding_function = OpenAIEmbeddingFunction(api_key=os.environ.get('OPENAI_API_KEY'), model_name="text-embedding-3-small")
+index_name = "infochatterindex"
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 def extract_anexos(infile_path, outfile_path):
     # Detect page range for each anexo
@@ -66,7 +68,7 @@ def extract_anexos(infile_path, outfile_path):
             writer.write(out)
 
 
-def vectorize_pdf(ChromaClient, collectionhash, pdffile, pdfname):
+def vectorize_pdf(namespace, pdffile, pdfname):
     # Splits and embeds pdf in a collection of the same name
     loader = PyPDFLoader(pdffile)
     docs = loader.load()
@@ -76,15 +78,25 @@ def vectorize_pdf(ChromaClient, collectionhash, pdffile, pdfname):
     )
     all_splits = text_splitter.split_documents(docs)
 
-    Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=collectionhash, client=ChromaClient, collection_metadata={"filename": pdfname})
+    vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings, namespace=namespace)
+    vectorstore.add_documents(all_splits)
 
 
-def extract_info(ChromaClient, collectionhash, info_to_extract: str):
+def vectorize_web(ChromaClient, collectionhash, weburl, webname):
+    loader = WebBaseLoader(weburl)
+    data = loader.load()
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=200, add_start_index=True
+    )
+    all_splits = text_splitter.split_documents(data)
+    Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=collectionhash,
+                          client=ChromaClient, collection_metadata={"filename": webname})
+
+def extract_info(namespace, info_to_extract: str):
     # Load from disk
-    collection = Chroma(client=ChromaClient, collection_name=collectionhash, embedding_function=OpenAIEmbeddings(model="text-embedding-3-small"))
-
-    # Retriever
-    retriever = collection.as_retriever(search_type="similarity", search_kwargs={"k": 6})
+    vectorstore = PineconeVectorStore(index_name=index_name, embedding=embeddings, namespace=namespace)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 6})
 
     # Chain
     llm = ChatOpenAI(model="gpt-3.5-turbo")
@@ -108,16 +120,6 @@ def extract_info(ChromaClient, collectionhash, info_to_extract: str):
 
     return rag_chain.invoke(info_to_extract)
 
-def vectorize_web(ChromaClient, collectionhash, weburl, webname):
-    loader = WebBaseLoader(weburl)
-    data = loader.load()
-
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000, chunk_overlap=200, add_start_index=True
-    )
-    all_splits = text_splitter.split_documents(data)
-    Chroma.from_documents(all_splits, OpenAIEmbeddings(model="text-embedding-3-small"), collection_name=collectionhash,
-                          client=ChromaClient, collection_metadata={"filename": webname})
 
 def save_to_hashdict(dictpath, key, value):
     if not os.path.isfile(dictpath):
