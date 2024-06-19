@@ -48,7 +48,7 @@ async def vectorizeweb(request: Request, webhash: str):
     # Save to pdf dict
     return "Web vectorized succesfully, saved at collection " + webhash
 
-@app.get("/ask_info")
+@app.post("/ask_info")
 async def extractinfo(request: Request, collectionhash: str):
     # Uses collection in pdfhash to answer question in request
     body = await request.json()
