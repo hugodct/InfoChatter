@@ -13,9 +13,9 @@ import pickle
 
 
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = "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"
-os.environ["OPENAI_API_KEY"] = "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"
-os.environ['PINECONE_API_KEY'] = '9ba0f5d0-af9f-491e-9f5c-663b388c1b8a'
+os.environ["LANGCHAIN_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = ""
+os.environ['PINECONE_API_KEY'] = ''
 
 index_name = "infochatterindex"
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
